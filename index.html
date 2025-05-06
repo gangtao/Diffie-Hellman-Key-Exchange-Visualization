@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diffie-Hellman Key Exchange</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            margin: 0 5px;
+            border-bottom: none;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background-color: white;
+            border-bottom: 2px solid white;
+            margin-bottom: -2px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .visualization {
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .parties {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 50px;
+        }
+        
+        .party {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .party-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        .alice .party-icon {
+            background-color: #3498db;
+        }
+        
+        .bob .party-icon {
+            background-color: #2ecc71;
+        }
+        
+        .attacker .party-icon {
+            background-color: #e74c3c;
+        }
+        
+        .shared-values {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .shared-values h3 {
+            margin-top: 0;
+        }
+        
+        .values {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .value-box {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+        
+        .secret-value {
+            background-color: #ffebee !important;
+            border-color: #ef5350 !important;
+        }
+        
+        .public-value {
+            background-color: #e8f5e9 !important;
+            border-color: #66bb6a !important;
+        }
+        
+        .exchange-area {
+            margin: 40px 0;
+            text-align: center;
+        }
+        
+        .arrow {
+            display: inline-block;
+            margin: 0 20px;
+            font-size: 30px;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        
+        .arrow.show {
+            opacity: 1;
+        }
+        
+        .controls {
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            margin: 0 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .paint-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 50px 0;
+        }
+        
+        .paint-bucket {
+            width: 80px;
+            height: 100px;
+            border: 3px solid #333;
+            border-radius: 0 0 10px 10px;
+            position: relative;
+            transition: all 0.5s;
+            overflow: hidden;
+        }
+        
+        .paint {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 90%;
+            transition: all 0.5s;
+        }
+        
+        .paint-label {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        
+        .highlight {
+            animation: highlight 0.5s ease-in-out;
+        }
+        
+        @keyframes highlight {
+            0% { background-color: transparent; }
+            50% { background-color: #fff3cd; }
+            100% { background-color: transparent; }
+        }
+        
+        .formula {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .step-info {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Diffie-Hellman Key Exchange</h1>
+        <p class="subtitle">A beautiful algorithm for establishing shared secrets over insecure networks</p>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('paint')">Paint Analogy</div>
+            <div class="tab" onclick="switchTab('math')">Mathematical Process</div>
+        </div>
+        
+        <div id="paint-tab" class="tab-content active">
+            <h2>The Paint Mixing Analogy</h2>
+            <p>Imagine two people, Alice and Bob, want to create the same secret color by mixing paints over an unsecure channel where an attacker, Eve, can see everything.</p>
+            
+            <div class="visualization">
+                <div class="parties">
+                    <div class="party alice">
+                        <div class="party-icon">👩</div>
+                        <h3>Alice</h3>
+                    </div>
+                    <div class="party attacker">
+                        <div class="party-icon">👨‍💻</div>
+                        <h3>Eve (Attacker)</h3>
+                    </div>
+                    <div class="party bob">
+                        <div class="party-icon">👨</div>
+                        <h3>Bob</h3>
+                    </div>
+                </div>
+                
+                <div class="paint-container">
+                    <div>
+                        <div class="paint-bucket alice-paint">
+                            <div class="paint" id="alice-base-paint" style="background-color: #f39c12; height: 0%;"></div>
+                        </div>
+                        <div class="paint-label">Alice's Mix</div>
+                    </div>
+                    <div>
+                        <div class="paint-bucket public-paint">
+                            <div class="paint" id="public-paint" style="background-color: #f39c12; height: 0%;"></div>
+                        </div>
+                        <div class="paint-label">Public Color</div>
+                    </div>
+                    <div>
+                        <div class="paint-bucket bob-paint">
+                            <div class="paint" id="bob-base-paint" style="background-color: #f39c12; height: 0%;"></div>
+                        </div>
+                        <div class="paint-label">Bob's Mix</div>
+                    </div>
+                </div>
+                
+                <div id="paint-arrows" class="exchange-area">
+                    <span class="arrow" id="alice-arrow">→</span>
+                    <span class="arrow" id="bob-arrow">←</span>
+                </div>
+                
+                <div class="paint-container">
+                    <div>
+                        <div class="paint-bucket">
+                            <div class="paint" id="alice-final-paint" style="background-color: #8e44ad; height: 0%;"></div>
+                        </div>
+                        <div class="paint-label">Alice's Final Color</div>
+                    </div>
+                    <div>
+                        <div class="paint-bucket">
+                            <div class="paint" id="eve-guess-paint" style="background-color: #95a5a6; height: 0%;"></div>
+                        </div>
+                        <div class="paint-label">Eve's Guess</div>
+                    </div>
+                    <div>
+                        <div class="paint-bucket">
+                            <div class="paint" id="bob-final-paint" style="background-color: #8e44ad; height: 0%;"></div>
+                        </div>
+                        <div class="paint-label">Bob's Final Color</div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn" onclick="animatePaintProcess()">Start Animation</button>
+                    <button class="btn" onclick="resetPaintAnimation()">Reset</button>
+                </div>
+                
+                <div id="paint-step-info" class="step-info">
+                    Click "Start Animation" to see how Alice and Bob create the same secret color while Eve cannot determine what it is!
+                </div>
+            </div>
+        </div>
+        
+        <div id="math-tab" class="tab-content">
+            <h2>The Mathematical Process</h2>
+            <p>Diffie-Hellman uses modular exponentiation to create a one-way mathematical function that allows two parties to establish a shared secret.</p>
+            
+            <div class="shared-values">
+                <h3>Public Parameters (Known to Everyone)</h3>
+                <div class="values">
+                    <div class="value-box public-value">
+                        <h4>Prime Number (p)</h4>
+                        <div id="prime-p">97</div>
+                    </div>
+                    <div class="value-box public-value">
+                        <h4>Base (g)</h4>
+                        <div id="base-g">5</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="visualization">
+                <div class="parties">
+                    <div class="party alice">
+                        <div class="party-icon">👩</div>
+                        <h3>Alice</h3>
+                        <div class="value-box secret-value">
+                            <h4>Secret: a</h4>
+                            <div id="alice-secret">36</div>
+                        </div>
+                        <div class="value-box public-value" style="margin-top: 10px;">
+                            <h4>Sends: A = g^a mod p</h4>
+                            <div id="alice-public">?</div>
+                        </div>
+                    </div>
+                    
+                    <div class="party attacker">
+                        <div class="party-icon">👨‍💻</div>
+                        <h3>Eve (Attacker)</h3>
+                        <div class="value-box">
+                            <h4>Sees</h4>
+                            <div id="eve-sees">p, g, A, B</div>
+                        </div>
+                        <div class="value-box" style="margin-top: 10px;">
+                            <h4>Cannot compute</h4>
+                            <div id="eve-cannot">a, b, or secret s</div>
+                        </div>
+                    </div>
+                    
+                    <div class="party bob">
+                        <div class="party-icon">👨</div>
+                        <h3>Bob</h3>
+                        <div class="value-box secret-value">
+                            <h4>Secret: b</h4>
+                            <div id="bob-secret">58</div>
+                        </div>
+                        <div class="value-box public-value" style="margin-top: 10px;">
+                            <h4>Sends: B = g^b mod p</h4>
+                            <div id="bob-public">?</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="math-arrows" class="exchange-area">
+                    <span class="arrow" id="alice-math-arrow">→</span>
+                    <span class="arrow" id="bob-math-arrow">←</span>
+                </div>
+                
+                <div class="shared-values">
+                    <h3>Final Computation</h3>
+                    <div class="values">
+                        <div class="value-box">
+                            <h4>Alice computes</h4>
+                            <div class="formula" id="alice-calc">s = B^a mod p</div>
+                            <div id="alice-result">?</div>
+                        </div>
+                        <div class="value-box">
+                            <h4>Bob computes</h4>
+                            <div class="formula" id="bob-calc">s = A^b mod p</div>
+                            <div id="bob-result">?</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn" onclick="animateMathProcess()">Start Animation</button>
+                    <button class="btn" onclick="resetMathAnimation()">Reset</button>
+                </div>
+                
+                <div id="math-step-info" class="step-info">
+                    Click "Start Animation" to see the mathematical exchange step by step!
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #ddd;">
+            <h2>Why It Works</h2>
+            <p>The beauty of Diffie-Hellman lies in its use of one-way mathematical functions:</p>
+            <ul>
+                <li><strong>Forward calculation is easy:</strong> Computing g^x mod p is fast</li>
+                <li><strong>Reverse calculation is hard:</strong> Finding x from g^x mod p (the discrete logarithm problem) is computationally difficult when p is large enough</li>
+                <li><strong>Both parties get the same result:</strong> Because g^(a*b) mod p = g^(b*a) mod p</li>
+            </ul>
+            <p>This allows Alice and Bob to establish a shared secret without ever transmitting it directly over the network!</p>
+        </div>
+    </div>
+    
+    <script>
+        function switchTab(tab) {
+            // Hide all tabs and deactivate buttons
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab and activate button
+            if (tab === 'paint') {
+                document.getElementById('paint-tab').classList.add('active');
+                document.querySelector('.tab:first-child').classList.add('active');
+            } else {
+                document.getElementById('math-tab').classList.add('active');
+                document.querySelector('.tab:last-child').classList.add('active');
+            }
+        }
+        
+        async function animatePaintProcess() {
+            const stepInfo = document.getElementById('paint-step-info');
+            
+            // Reset
+            resetPaintAnimation();
+            
+            // Step 1: Public color appears
+            stepInfo.textContent = "Step 1: A public paint color (orange) is chosen and visible to everyone.";
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            document.getElementById('public-paint').style.height = '90%';
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Step 2: Alice and Bob mix their secret colors
+            stepInfo.textContent = "Step 2: Alice and Bob each add their own secret color to the public color.";
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            document.getElementById('alice-base-paint').style.height = '90%';
+            document.getElementById('alice-base-paint').style.background = 'linear-gradient(to top, #e74c3c 0%, #e74c3c 30%, #f39c12 30%, #f39c12 100%)';
+            document.getElementById('bob-base-paint').style.height = '90%';
+            document.getElementById('bob-base-paint').style.background = 'linear-gradient(to top, #3498db 0%, #3498db 30%, #f39c12 30%, #f39c12 100%)';
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Step 3: Exchange mixtures
+            stepInfo.textContent = "Step 3: Alice and Bob exchange their mixtures publicly. Eve can see both.";
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            document.getElementById('alice-arrow').classList.add('show');
+            document.getElementById('bob-arrow').classList.add('show');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Step 4: Final mixing
+            stepInfo.textContent = "Step 4: Alice and Bob each add their secret color to the other's mixture.";
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            document.getElementById('alice-final-paint').style.height = '90%';
+            document.getElementById('bob-final-paint').style.height = '90%';
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Step 5: Result
+            stepInfo.textContent = "Result: Alice and Bob have the same secret color! Eve cannot recreate it without knowing the secret colors.";
+            document.getElementById('eve-guess-paint').style.height = '90%';
+            
+            // Highlight the matching colors
+            setTimeout(() => {
+                document.querySelector('.alice-paint').classList.add('highlight');
+                document.querySelector('.bob-paint').classList.add('highlight');
+            }, 1000);
+        }
+        
+        function resetPaintAnimation() {
+            document.getElementById('public-paint').style.height = '0%';
+            document.getElementById('alice-base-paint').style.height = '0%';
+            document.getElementById('alice-base-paint').style.background = '#f39c12';
+            document.getElementById('bob-base-paint').style.height = '0%';
+            document.getElementById('bob-base-paint').style.background = '#f39c12';
+            document.getElementById('alice-final-paint').style.height = '0%';
+            document.getElementById('bob-final-paint').style.height = '0%';
+            document.getElementById('eve-guess-paint').style.height = '0%';
+            document.getElementById('alice-arrow').classList.remove('show');
+            document.getElementById('bob-arrow').classList.remove('show');
+            document.querySelector('.alice-paint').classList.remove('highlight');
+            document.querySelector('.bob-paint').classList.remove('highlight');
+            document.getElementById('paint-step-info').textContent = "Click 'Start Animation' to see how Alice and Bob create the same secret color while Eve cannot determine what it is!";
+        }
+        
+        async function animateMathProcess() {
+            const stepInfo = document.getElementById('math-step-info');
+            const p = 97;
+            const g = 5;
+            const a = 36;
+            const b = 58;
+            
+            // Reset
+            resetMathAnimation();
+            
+            // Step 1: Show public parameters
+            stepInfo.textContent = "Step 1: Public parameters p and g are agreed upon and visible to everyone.";
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Step 2: Alice and Bob choose secrets
+            stepInfo.textContent = "Step 2: Alice chooses secret a, Bob chooses secret b.";
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Step 3: Compute public values
+            stepInfo.textContent = "Step 3: Alice computes A = g^a mod p, Bob computes B = g^b mod p.";
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const alicePublic = Math.pow(g, a) % p;
+            const bobPublic = Math.pow(g, b) % p;
+            
+            document.getElementById('alice-public').textContent = alicePublic;
+            document.getElementById('bob-public').textContent = bobPublic;
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Step 4: Exchange public values
+            stepInfo.textContent = "Step 4: Alice and Bob exchange their public values. Eve can see both.";
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            document.getElementById('alice-math-arrow').classList.add('show');
+            document.getElementById('bob-math-arrow').classList.add('show');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Step 5: Compute shared secret
+            stepInfo.textContent = "Step 5: Alice computes s = B^a mod p, Bob computes s = A^b mod p.";
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const aliceSecret = Math.pow(bobPublic, a) % p;
+            const bobSecret = Math.pow(alicePublic, b) % p;
+            
+            document.getElementById('alice-result').textContent = aliceSecret;
+            document.getElementById('bob-result').textContent = bobSecret;
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Step 6: Result
+            stepInfo.textContent = `Success! Both Alice and Bob computed the same secret: ${aliceSecret}. Eve cannot compute this without knowing a or b.`;
+            
+            // Highlight the matching results
+            setTimeout(() => {
+                document.getElementById('alice-result').parentElement.classList.add('highlight');
+                document.getElementById('bob-result').parentElement.classList.add('highlight');
+            }, 1000);
+        }
+        
+        function resetMathAnimation() {
+            document.getElementById('alice-public').textContent = '?';
+            document.getElementById('bob-public').textContent = '?';
+            document.getElementById('alice-result').textContent = '?';
+            document.getElementById('bob-result').textContent = '?';
+            document.getElementById('alice-math-arrow').classList.remove('show');
+            document.getElementById('bob-math-arrow').classList.remove('show');
+            document.getElementById('alice-result').parentElement.classList.remove('highlight');
+            document.getElementById('bob-result').parentElement.classList.remove('highlight');
+            document.getElementById('math-step-info').textContent = "Click 'Start Animation' to see the mathematical exchange step by step!";
+        }
+    </script>
+</body>
+</html>
